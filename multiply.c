@@ -23,8 +23,54 @@ typedef struct{
     unsigned int end_row;
 } thread_data;
 
-// threads: {2, 4, 8, 16}.
+// Matirx[i][j] = M->ptr[i * M->n + j]
+void *mat_multiply_thread(void *arg) {
+    thread_data *data = (thread_data *)arg;
+    Mat *A = data->A;
+    Mat *B = data->B;
+    Mat *C = data->C;
+    unsigned int start_row = data->start_row;
+    unsigned int end_row = data->end_row;
+
+    for (unsigned int i = start_row; i <= end_row; i++) {
+        for (unsigned int j = 0; j < B->n; j++) {
+            double sum = 0;
+            for (unsigned int k = 0; k < A->n; k++) {
+                sum += A->ptr[i * A->n + k] * B->ptr[k * B->n + j];
+            }
+            C->ptr[i * C->n + j] = sum;
+        }        
+    }
+    return NULL;
+}
+
 void mat_multiply(Mat *A, Mat *B, Mat *C, unsigned int threads) {
-    
+    pthread_t tid[threads];
+    thread_data data[threads];
+
+    unsigned int rows_per_thread = A->m / threads;
+    unsigned int extra_rows = A->m % threads;
+
+    unsigned int start_row = 0;
+    for (unsigned int i = 0; i < threads; i++) {
+        data[i].A = A;
+        data[i].B = B;
+        data[i].C = C;
+        data[i].start_row = start_row;
+        data[i].end_row = start_row + rows_per_thread - 1;
+
+        if (extra_rows > 0) {
+            data[i].end_row++;
+            extra_rows--;
+        }
+        start_row = data[i].end_row + 1;        
+    }
+
+    for (unsigned int i = 0; i < threads; i++) {
+        pthread_create(&tid[i], NULL, mat_multiply_thread, &data[i]);
+    }
+    for (unsigned int i = 0; i < threads; i++) {
+        pthread_join(tid[i], NULL);
+    }
     return;
 }
