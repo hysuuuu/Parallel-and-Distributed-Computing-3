@@ -16,6 +16,16 @@
 // Remember to set the correct values for C->m, and C->n after doing the
 // multiplication (this matters if the matrices are not square)
 
+/**
+ * LoopOrder defines the order in which loops iterate during matrix multiplication.
+ *
+ * - ORDER_IJK: Iterate over rows (i), then columns (j), then inner dimension (k).
+ * - ORDER_IKJ: Iterate over rows (i), then inner dimension (k), then columns (j).
+ * - ORDER_JIK: Iterate over columns (j), then rows (i), then inner dimension (k).
+ * - ORDER_JKI: Iterate over columns (j), then inner dimension (k), then rows (i).
+ * - ORDER_KIJ: Iterate over inner dimension (k), then rows (i), then columns (j).
+ * - ORDER_KJI: Iterate over inner dimension (k), then columns (j), then rows (i).
+ */
 typedef enum {
     ORDER_IJK,
     ORDER_IKJ,
@@ -34,6 +44,9 @@ typedef struct{
     LoopOrder order;
 } thread_data;
 
+
+// Multiplies each element of a specified row in a 2D array (matrix) by a given scalar value.
+// Matirx[i][j] = M->ptr[i * M->n + j]
 static void multiply_row(Mat *A, Mat *B, Mat *C, unsigned int row, LoopOrder order) {
     unsigned int N = A->n;
     switch (order) {
@@ -90,7 +103,9 @@ static void multiply_row(Mat *A, Mat *B, Mat *C, unsigned int row, LoopOrder ord
     }
 }
 
-// Matirx[i][j] = M->ptr[i * M->n + j]
+// Thread worker function that computes a subset of rows of matrix C
+// Each thread computes the matrix multiplication for rows [start_row, end_row]
+// using the specified loop order.
 void *mat_multiply_thread(void *arg) {
     thread_data *data = (thread_data *)arg;
     Mat *A = data->A;
@@ -106,6 +121,9 @@ void *mat_multiply_thread(void *arg) {
     return NULL;
 }
 
+// Divides the work among threads, assigning each thread
+// a subset of rows to compute. Loop order is determined by the LOOP_ORDER
+// environment variable (default is IJK). Threads are created and joined here.
 void mat_multiply(Mat *A, Mat *B, Mat *C, unsigned int threads) {
     char *e = getenv("LOOP_ORDER");
     LoopOrder order = e ? (LoopOrder)atoi(e) : ORDER_IJK;
