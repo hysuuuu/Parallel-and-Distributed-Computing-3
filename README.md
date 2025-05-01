@@ -1,5 +1,7 @@
 # Usage
-USAGE: ./loop_unfolding.bin n t verb order
+USAGE: LOOP_ORDER=order ./loop_unfolding.bin n t verb
+
+order(optional): 0-5, default order = 0 (ijk)
 
 n       : Size of the square matrix
 
