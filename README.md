@@ -7,9 +7,6 @@ t       : Number of threads used by the multi-thread multiplier.
 
 verb    : 0=prints only execution time. 1=also print matrices.
 
-order   : 0-5 for the six possible loop orderings for matrix multiplication.
-
-
 # Result Charts          
 ![Results of 64](/images/64.png)
 ![Results of 128](/images/128.png)
